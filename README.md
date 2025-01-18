@@ -4,114 +4,100 @@ A quantum computing framework for measuring and applying logical forces in AI sy
 
 ## 📚 Table of Contents
 - [Overview](#overview)
+- [Key Features](#key-features)
 - [Installation](#installation)
 - [Project Structure](#project-structure)
 - [Quick Start](#quick-start)
 - [Core Components](#core-components)
+- [Development](#development)
 - [Examples](#examples)
-- [API Reference](#api-reference)
+- [Documentation](#documentation)
 - [Contributing](#contributing)
+- [License](#license)
+- [Citation](#citation)
 
 ## Overview
 
 LFT Framework provides tools for measuring and applying logical forces in quantum-enhanced AI systems. It bridges classical logic, quantum computing, and artificial intelligence through a unified theoretical framework.
 
-### Key Features
-- Logic force measurement and quantification
-- Quantum state generation from logical rules
-- AI system integration capabilities
-- Real-time decision optimization
-- Quantum resource estimation
+## Key Features
+- Quantum-enhanced logical force measurement and quantification
+- State-of-the-art quantum state generation from logical rules
+- Seamless AI system integration capabilities
+- Real-time decision optimization with quantum processing
+- Comprehensive quantum resource estimation
+- Advanced coherence preservation mechanisms
+- Performance metrics and analytics tools
+- Enhanced chatbot implementation example
 
 ## Installation
 
+### From PyPI (Recommended)
+```bash
+pip install lft-framework
+```
+
+### From Source
 ```bash
 # Clone the repository
 git clone https://github.com/phucthemen/Logic-Force-Theory-LFT-Framework.git
 
 # Navigate to the project directory
-cd lft-framework
+cd Logic-Force-Theory-LFT-Framework
 
-# Create a virtual environment
+# Create and activate virtual environment
 python -m venv venv
+source venv/bin/activate  # On Unix/MacOS
+# or
+venv\Scripts\activate  # On Windows
 
-# Activate the virtual environment
-# On Windows:
-venv\Scripts\activate
-# On Unix or MacOS:
-source venv/bin/activate
-
-# Install dependencies
-pip install -r requirements.txt
+# Install in development mode with all extras
+pip install -e .[dev,docs]
 ```
 
 ## Project Structure
-
 ```
 Logic-Force-Theory-LFT-Framework/
-├── src/
-│   ├── __init__.py
-│   ├── core/
-│   │   ├── __init__.py
-│   │   ├── logic_force.py
-│   │   ├── quantum_processor.py
-│   │   └── ai_interface.py
-│   ├── utils/
-│   │   ├── __init__.py
-│   │   └── measurements.py
-│   └── examples/
-│       ├── __init__.py
+├── src/                     # Source code
+│   ├── core/               # Core components
+│   │   ├── logic_force.py  # Logical force processing
+│   │   ├── quantum_processor.py  # Quantum operations
+│   │   └── ai_interface.py # AI integration
+│   ├── utils/              # Utilities
+│   │   └── measurements.py # Measurement tools
+│   └── examples/           # Example implementations
 │       └── chatbot_example.py
-├── tests/
-│   ├── __init__.py
-│   ├── test_logic_force.py
-│   └── test_quantum_processor.py
-├── docs/
-│   ├── api.md
-│   └── examples.md
-├── requirements.txt
-└── README.md
+├── tests/                  # Test suite
+├── docs/                   # Documentation
+└── requirements.txt        # Dependencies
 ```
 
 ## Quick Start
 
-Here's a simple example to get you started:
-
 ```python
-from lft.core import LogicForceProcessor
+from lft.core import LogicForceProcessor, QuantumDecisionSystem
 from lft.utils import measure_logic_impact
 
-# Initialize the processor
-processor = LogicForceProcessor()
-
-# Define basic logical rules
-rules = {
-    "greeting": ["hi", "hello", "hey"],
-    "command": ["create", "update", "delete"],
-    "query": ["what", "how", "when"]
-}
-
-# Create a decision system
-decision_system = processor.create_quantum_decision_system(
-    rules=rules,
-    quantum_depth=3
+# Initialize components
+processor = LogicForceProcessor(num_qubits=4)
+decision_system = QuantumDecisionSystem(
+    logic_rules={
+        "greeting": ["hi", "hello", "hey"],
+        "command": ["create", "update", "delete"],
+        "query": ["what", "how", "when"]
+    }
 )
 
-# Process an input
-result = decision_system.process("Hello, create a new document")
+# Process input
+result = processor.process("Hello, can you create a new document?")
 print(f"Logic Force: {result.force}")
-print(f"Decision Confidence: {result.confidence}")
+print(f"Decision: {decision_system.process(result.state_vector).decision}")
 ```
 
 ## Core Components
 
 ### LogicForceProcessor
-
-The main class for processing logical forces and converting them to quantum states.
-
 ```python
-from lft.core import LogicForceProcessor
-
 processor = LogicForceProcessor(
     num_qubits=4,
     force_threshold=0.7,
@@ -120,9 +106,6 @@ processor = LogicForceProcessor(
 ```
 
 ### QuantumDecisionSystem
-
-Handles quantum-enhanced decision making based on logical forces.
-
 ```python
 system = QuantumDecisionSystem(
     logic_rules=rules,
@@ -132,9 +115,6 @@ system = QuantumDecisionSystem(
 ```
 
 ### AIInterface
-
-Interface for integrating with AI systems.
-
 ```python
 ai_interface = AIInterface(
     model_type='transformer',
@@ -143,94 +123,98 @@ ai_interface = AIInterface(
 )
 ```
 
+## Development
+
+### Running Tests
+```bash
+# Run all tests
+pytest
+
+# Run with coverage report
+pytest --cov=src tests/
+
+# Run specific test file
+pytest tests/test_logic_force.py
+```
+
+### Code Style
+The project uses:
+- Black for code formatting
+- Flake8 for style checking
+- MyPy for type checking
+- isort for import sorting
+
+```bash
+# Format code
+black src/ tests/
+
+# Check style
+flake8 src/ tests/
+
+# Check types
+mypy src/
+```
+
 ## Examples
 
-### Chatbot Enhancement
-
+### Enhanced Chatbot
 ```python
 from lft.examples import EnhancedChatbot
 
 chatbot = EnhancedChatbot(
     base_model="gpt-3",
-    logic_force_processor=processor,
     confidence_threshold=0.8
 )
 
-response = chatbot.process_message(
-    "Can you help me create a new document?"
+response, metrics = chatbot.process_message(
+    "Can you help me with quantum computing?"
 )
 ```
 
-### Automated Control System
-
+### Automated Decision System
 ```python
-from lft.examples import QuantumControlSystem
+from lft.core import QuantumDecisionSystem
 
-control_system = QuantumControlSystem(
-    sensors=["temp", "pressure", "humidity"],
-    logic_rules=control_rules,
-    safety_threshold=0.95
+system = QuantumDecisionSystem(
+    logic_rules={
+        "technical": ["algorithm", "quantum", "compute"],
+        "theoretical": ["theory", "principle", "concept"]
+    }
 )
 
-action = control_system.process_sensor_data(sensor_readings)
+decision = system.process("Explain quantum computing principles")
 ```
 
-## API Reference
+## Documentation
 
-### LogicForceProcessor
+Full documentation is available in the `docs/` directory:
+- API Reference: `docs/api.md`
+- Examples: `docs/examples.md`
 
-```python
-class LogicForceProcessor:
-    def calculate_force(self, input_text: str) -> float:
-        """Calculate logical force from input text"""
-        
-    def generate_quantum_state(self, force: float) -> np.ndarray:
-        """Generate quantum state based on logical force"""
-        
-    def measure_impact(self, 
-                      initial_state: np.ndarray,
-                      final_state: np.ndarray) -> Dict[str, float]:
-        """Measure the impact of logical force transformation"""
-```
-
-### QuantumDecisionSystem
-
-```python
-class QuantumDecisionSystem:
-    def process(self, input_data: Union[str, Dict]) -> DecisionResult:
-        """Process input and make quantum-enhanced decision"""
-        
-    def update_rules(self, new_rules: Dict[str, List[str]]) -> None:
-        """Update logical rules for decision making"""
-        
-    def calibrate(self, training_data: List[Tuple]) -> None:
-        """Calibrate the decision system using training data"""
+To build the documentation:
+```bash
+pip install -e .[docs]
+sphinx-build -b html docs/ docs/_build/html
 ```
 
 ## Contributing
 
 We welcome contributions! Please follow these steps:
 
-1. Fork the repository
-2. Create a new branch: `git checkout -b feature-name`
-3. Make your changes
-4. Run tests: `python -m pytest tests/`
-5. Submit a pull request
+1. Check open issues or create a new one to discuss your idea
+2. Fork the repository
+3. Create a new branch: `git checkout -b feature-name`
+4. Make your changes
+5. Run tests: `pytest`
+6. Submit a pull request
 
 ### Development Setup
-
 ```bash
 # Install development dependencies
-pip install -r requirements-dev.txt
+pip install -e .[dev]
 
-# Run tests
-pytest
-
-# Run linting
-flake8 src/ tests/
-
-# Generate documentation
-sphinx-build -b html docs/ docs/_build/html
+# Setup pre-commit hooks
+pre-commit install
 ```
 
 ## License
@@ -246,6 +230,18 @@ If you use this framework in your research, please cite:
     title = {Logic Force Theory Framework},
     author = {Your Name},
     year = {2025},
-    url = {https://github.com/yourusername/lft-framework}
+    url = {https://github.com/phucthemen/Logic-Force-Theory-LFT-Framework}
 }
 ```
+
+## Acknowledgments
+
+- Quantum Computing Libraries: Qiskit, Cirq
+- AI Frameworks: PyTorch, Transformers
+- Scientific Computing: NumPy, SciPy
+
+## Contact
+
+For questions and support:
+- GitHub Issues: [Create an issue](https://github.com/phucthemen/Logic-Force-Theory-LFT-Framework/issues)
+- Email: phucthemen@gmail.com
