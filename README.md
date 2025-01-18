@@ -27,7 +27,7 @@ LFT Framework provides tools for measuring and applying logical forces in quantu
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/lft-framework.git
+git clone https://github.com/phucthemen/Logic-Force-Theory-LFT-Framework.git
 
 # Navigate to the project directory
 cd lft-framework
@@ -48,7 +48,7 @@ pip install -r requirements.txt
 ## Project Structure
 
 ```
-lft-framework/
+Logic-Force-Theory-LFT-Framework/
 ├── src/
 │   ├── __init__.py
 │   ├── core/
