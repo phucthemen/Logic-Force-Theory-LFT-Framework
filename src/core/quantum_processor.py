@@ -1,194 +1,103 @@
-from typing import List, Dict, Optional, Tuple
 import numpy as np
+from typing import Dict, List, Optional, Tuple
 from dataclasses import dataclass
-from .logic_force import LogicForce
+from .logic_force import LogicForceProcessor
 
 @dataclass
-class QuantumDecision:
-    """Represents a quantum-enhanced decision"""
-    confidence: float
-    chosen_action: str
-    alternate_actions: Dict[str, float]
-    qubits_used: int
-    coherence: float
+class DecisionResult:
+    decision: str
+    probability: float
+    quantum_state: np.ndarray
 
-class QuantumProcessor:
-    """Handles quantum processing of logical forces"""
-    
-    def __init__(self, 
-                 num_qubits: int = 4,
-                 error_threshold: float = 0.01,
-                 max_depth: int = 10):
+class QuantumDecisionSystem:
+    def __init__(
+        self,
+        logic_rules: Dict[str, List[str]],
+        weights: Optional[Dict[str, float]] = None,
+        quantum_backend: str = 'default',
+        num_qubits: int = 4
+    ):
+        self.logic_rules = logic_rules
+        self.weights = weights or {category: 1.0 for category in logic_rules}
+        self.quantum_backend = quantum_backend
         self.num_qubits = num_qubits
-        self.error_threshold = error_threshold
-        self.max_depth = max_depth
-        self.state = self._initialize_state()
+        self.processor = LogicForceProcessor(num_qubits=num_qubits)
         
-    def _initialize_state(self) -> np.ndarray:
-        """Initialize quantum system state"""
-        dim = 2 ** self.num_qubits
-        state = np.zeros(dim)
-        state[0] = 1.0  # Start in ground state
-        return state
-        
-    def apply_logic_operation(self, 
-                            force: LogicForce,
-                            target_qubits: Optional[List[int]] = None) -> None:
-        """Apply logical force as quantum operation"""
-        if target_qubits is None:
-            target_qubits = list(range(min(self.num_qubits, 
-                                         int(-np.log2(force.uncertainty)))))
-            
-        # Create operation matrix
-        op_matrix = self._create_logic_operator(force, len(target_qubits))
-        
-        # Apply operation to specified qubits
-        self.state = self._apply_partial_operator(op_matrix, 
-                                                target_qubits,
-                                                self.state)
-                                                
-    def _create_logic_operator(self, 
-                             force: LogicForce,
-                             num_qubits: int) -> np.ndarray:
-        """Create quantum operator from logical force"""
-        dim = 2 ** num_qubits
-        
-        # Create base rotation matrix
-        theta = force.magnitude * np.pi
-        phi = force.direction
-        
-        # Single qubit rotation matrix
-        rotation = np.array([
-            [np.cos(theta/2), -np.exp(-1j*phi)*np.sin(theta/2)],
-            [np.exp(1j*phi)*np.sin(theta/2), np.cos(theta/2)]
+    def create_quantum_circuit(self, state: np.ndarray) -> np.ndarray:
+        """Create a quantum circuit for decision making."""
+        # Apply quantum operations
+        # Here we're using a simple rotation based on the state
+        angle = np.angle(state[np.argmax(np.abs(state))])
+        rotation_matrix = np.array([
+            [np.cos(angle), -np.sin(angle)],
+            [np.sin(angle), np.cos(angle)]
         ])
         
-        # Extend to multiple qubits
-        operator = rotation
-        for _ in range(num_qubits - 1):
-            operator = np.kron(operator, rotation)
+        # Apply rotation to each qubit pair
+        final_state = state.copy()
+        for i in range(0, self.num_qubits - 1, 2):
+            slice_indices = slice(2**i, 2**(i+2))
+            final_state[slice_indices] = rotation_matrix @ final_state[slice_indices]
             
-        # Apply coherence damping
-        gamma = 1 - force.coherence
-        operator = (1 - gamma) * operator + gamma * np.eye(dim)
+        return final_state
+    
+    def measure_state(self, state: np.ndarray) -> Tuple[str, float]:
+        """Measure the quantum state to make a decision."""
+        probabilities = np.abs(state) ** 2
         
-        return operator
+        # Map state indices to decisions
+        decision_map = {
+            category: i * (len(state) // len(self.logic_rules))
+            for i, category in enumerate(self.logic_rules)
+        }
         
-    def _apply_partial_operator(self,
-                              operator: np.ndarray,
-                              target_qubits: List[int],
-                              state: np.ndarray) -> np.ndarray:
-        """Apply operator to specific qubits"""
-        # Convert to density matrix
-        rho = np.outer(state, state.conj())
+        # Find the most probable decision
+        max_prob_index = np.argmax(probabilities)
+        decision = min(
+            decision_map.items(),
+            key=lambda x: abs(x[1] - max_prob_index)
+        )[0]
         
-        # Create full system operator
-        full_op = self._extend_to_system(operator, target_qubits)
+        return decision, probabilities[max_prob_index]
+    
+    def process(self, input_data: str) -> DecisionResult:
+        """Process input and make quantum-enhanced decision."""
+        # Get logical force and quantum state
+        force_result = self.processor.process(input_data, self.logic_rules)
         
-        # Apply operation
-        rho_new = full_op @ rho @ full_op.conj().T
+        # Create and execute quantum circuit
+        evolved_state = self.create_quantum_circuit(force_result.state_vector)
         
-        # Extract new state (take first eigenvector)
-        eigenvals, eigenvecs = np.linalg.eigh(rho_new)
-        new_state = eigenvecs[:, -1]
+        # Measure results
+        decision, probability = self.measure_state(evolved_state)
         
-        # Ensure proper normalization
-        new_state /= np.linalg.norm(new_state)
-        
-        return new_state
-        
-    def _extend_to_system(self,
-                         operator: np.ndarray,
-                         target_qubits: List[int]) -> np.ndarray:
-        """Extend operator to full system size"""
-        if not target_qubits:
-            return np.eye(2 ** self.num_qubits)
-            
-        # Sort target qubits
-        target_qubits = sorted(target_qubits)
-        
-        # Create full operator
-        result = np.eye(1)
-        curr_qubit = 0
-        
-        for sys_qubit in range(self.num_qubits):
-            if sys_qubit in target_qubits:
-                # Add operator for target qubit
-                idx = target_qubits.index(sys_qubit)
-                sub_op = operator[idx:idx+1, idx:idx+1]
-                result = np.kron(result, sub_op)
-                curr_qubit += 1
-            else:
-                # Add identity for non-target qubit
-                result = np.kron(result, np.eye(2))
-                
-        return result
-        
-    def make_decision(self,
-                     actions: Dict[str, float]) -> QuantumDecision:
-        """Make decision based on quantum state"""
-        # Calculate probabilities for each action
-        probs = self._calculate_action_probabilities(actions)
-        
-        # Choose action with highest probability
-        chosen = max(probs.items(), key=lambda x: x[1])
-        
-        # Calculate decision confidence
-        confidence = self._calculate_confidence(probs)
-        
-        # Calculate quantum coherence
-        coherence = self._calculate_coherence()
-        
-        return QuantumDecision(
-            confidence=confidence,
-            chosen_action=chosen[0],
-            alternate_actions={k: v for k, v in probs.items() if k != chosen[0]},
-            qubits_used=self.num_qubits,
-            coherence=coherence
+        return DecisionResult(
+            decision=decision,
+            probability=probability,
+            quantum_state=evolved_state
         )
         
-    def _calculate_action_probabilities(self,
-                                     actions: Dict[str, float]) -> Dict[str, float]:
-        """Calculate probability distribution over actions"""
-        # Get measurement probabilities
-        probs = np.abs(self.state) ** 2
+    def update_rules(self, new_rules: Dict[str, List[str]]) -> None:
+        """Update logical rules for decision making."""
+        self.logic_rules.update(new_rules)
+        # Update weights if necessary
+        for category in new_rules:
+            if category not in self.weights:
+                self.weights[category] = 1.0
+                
+    def calibrate(self, training_data: List[Tuple[str, str]]) -> None:
+        """Calibrate the decision system using training data."""
+        # Update weights based on training examples
+        successes = {category: 0 for category in self.logic_rules}
+        totals = {category: 0 for category in self.logic_rules}
         
-        # Map to actions
-        action_probs = {}
-        chunk_size = len(probs) // len(actions)
+        for input_text, expected_category in training_data:
+            result = self.process(input_text)
+            totals[expected_category] += 1
+            if result.decision == expected_category:
+                successes[expected_category] += 1
         
-        for i, (action, weight) in enumerate(actions.items()):
-            start = i * chunk_size
-            end = (i + 1) * chunk_size
-            action_probs[action] = weight * np.sum(probs[start:end])
-            
-        # Normalize
-        total = sum(action_probs.values())
-        if total > 0:
-            action_probs = {k: v/total for k, v in action_probs.items()}
-            
-        return action_probs
-        
-    def _calculate_confidence(self, probs: Dict[str, float]) -> float:
-        """Calculate decision confidence"""
-        if not probs:
-            return 0.0
-            
-        # Use entropy as confidence measure
-        prob_values = list(probs.values())
-        entropy_val = -sum(p * np.log2(p) for p in prob_values if p > 0)
-        max_entropy = np.log2(len(probs))
-        
-        if max_entropy == 0:
-            return 1.0
-            
-        # Convert entropy to confidence (1 - normalized entropy)
-        confidence = 1.0 - entropy_val / max_entropy
-        return confidence
-        
-    def _calculate_coherence(self) -> float:
-        """Calculate quantum coherence of current state"""
-        # Use l1-norm of coherence
-        rho = np.outer(self.state, self.state.conj())
-        coherence = np.sum(np.abs(rho)) - np.sum(np.abs(np.diag(rho)))
-        return min(1.0, coherence)
+        # Update weights based on success rates
+        for category in self.weights:
+            if totals[category] > 0:
+                self.weights[category] = successes[category] / totals[category]
