@@ -228,7 +228,7 @@ If you use this framework in your research, please cite:
 ```bibtex
 @software{lft_framework,
     title = {Logic Force Theory Framework},
-    author = {Your Name},
+    author = {Phuc Nguyen @phucthemen},
     year = {2025},
     url = {https://github.com/phucthemen/Logic-Force-Theory-LFT-Framework}
 }
